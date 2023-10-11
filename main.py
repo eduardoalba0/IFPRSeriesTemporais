@@ -67,13 +67,12 @@ def explorarDados(dfAgua, dfEnergia, dfClima):
 
 
 def treinarRF(df, var):
+    df = df.dropna()
     y = df[var]
     x = df.drop(var, axis=1)
 
-    xTreino, xTeste, yTreino, yTeste = train_test_split(x, y.values.ravel(), test_size=0.25, random_state=2023)
-
+    xTreino, xTeste, yTreino, yTeste = train_test_split(x, y.values, test_size=0.25, random_state=2023)
     modelo = RandomForestRegressor(n_estimators=1000, max_depth=10, random_state=2023)
-
     modelo.fit(xTreino, yTreino)
 
     print('Conjunto de Treino: %d' % len(yTreino))
@@ -102,7 +101,7 @@ def testar(modelo, variaveis, gabarito=None):
 def preProcessar(df):
     df = df.groupby(pd.Grouper(key="DATA", freq="D")).mean()
     for coluna in df.columns[df.isnull().any()]:
-        modelo, xTreino, xTeste, yTreino, yTeste = treinarRF(df.dropna(), [coluna])
+        modelo, xTreino, xTeste, yTreino, yTeste = treinarRF(df, [coluna])
         yPrevisto = testar(modelo, xTeste, yTeste)
         dfAux = pd.DataFrame(xTeste)
         dfAux["PREVISÃO"] = yPrevisto
@@ -145,7 +144,7 @@ def previsaoEnergia(dfEnergia):
 
 
 dfAgua, dfEnergia, dfClima = prepararDados()
-previsaoAgua(dfAgua)
-#preProcessar(dfClima)
+#previsaoEnergia(dfEnergia)
+preProcessar(dfClima)
 # dfClima = dfClima.groupby(pd.Grouper(key="DATA", freq="M")).mean()
 # previsaoEnergia(dfEnergia)
