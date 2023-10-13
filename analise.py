@@ -8,8 +8,6 @@ def analiseCorrelacao(df):
 
     if "DATA" in df.columns:
         df = df.drop("DATA", axis=1)
-    elif "DATA LEITURA" in df.columns:
-        df = df.drop('DATA LEITURA', axis=1)
 
     matrizCorrelacao = df.corr().abs()
     plt.figure(figsize=(12, 10))

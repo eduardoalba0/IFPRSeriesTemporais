@@ -12,9 +12,10 @@ def treinamentoAgua(dfAgua):
     dfResultado["PREVISÃO CONSUMO (M3)"] = yPrevisto
     dfResultado["ESPERADO"] = yTeste
 
-    dfResultado.sort_index(inplace=True)
+    dfResultado = dfResultado.sort_index()
 
-    plotTreinoTeste(dfResultado.index.values, dfResultado["PREVISÃO CONSUMO (M3)"], dfResultado["ESPERADO"], title="CONSUMO (M3)")
+    plotTreinoTeste(dfResultado.index.values, dfResultado["PREVISÃO CONSUMO (M3)"], dfResultado["ESPERADO"],
+                    title="CONSUMO (M3)")
 
 
 def treinamentoEnergia(dfEnergia):
@@ -28,7 +29,7 @@ def treinamentoEnergia(dfEnergia):
     dfResultado["PREVISÃO ENERGIA ELÉTRICA PONTA (KWh)"] = dfPrevisto.iloc[:, 0].values
     dfResultado["PREVISÃO ENERGIA ELÉTRICA FORA DA PONTA (KWh)"] = dfPrevisto.iloc[:, 1].values
 
-    dfResultado.sort_index(inplace=True)
+    dfResultado = dfResultado.sort_index()
 
     plotTreinoTeste(dfResultado.index.values,
                     dfResultado["PREVISÃO ENERGIA ELÉTRICA PONTA (KWh)"],
@@ -39,7 +40,8 @@ def treinamentoEnergia(dfEnergia):
                     dfResultado["ENERGIA ELÉTRICA FORA DA PONTA (KWh)"])
 
 
-dfAgua, dfEnergia, dfClima = prepararDados()
-dfClima = obterLags(dfClima)
-correlacaoClima = analiseCorrelacao(dfClima)
-tratamentoNulos(dfClima, correlacaoClima)
+dfAgua, dfEnergia, dfClima, dfHorasAula = prepararDados()
+
+
+dfGroup = agrupamentoMensalMedia(dfHorasAula, datas=dfEnergia.index.values)
+print(dfGroup)

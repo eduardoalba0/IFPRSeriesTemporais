@@ -10,8 +10,6 @@ def treinarRF(df, var):
     df = df.dropna()
     if "DATA" in df.columns:
         df = df.drop("DATA", axis=1)
-    elif "DATA LEITURA" in df.columns:
-        df = df.drop('DATA LEITURA', axis=1)
 
     y = df[var]
     x = df.drop(var, axis=1)
@@ -24,6 +22,7 @@ def treinarRF(df, var):
     print('Conjunto de Teste: %d' % len(yTeste))
 
     return modelo, xTreino, xTeste, yTreino, yTeste
+
 
 def testar(modelo, variaveis, gabarito=None):
     yPrevisto = modelo.predict(variaveis)
@@ -40,7 +39,6 @@ def testar(modelo, variaveis, gabarito=None):
         print('RMSE: %.3f' % rmse)
 
     return yPrevisto
-
 
 
 def plotTreinoTeste(x, valoresPrevistos, valoresEsperados, title="", xlabel="Data", ylabel=""):
