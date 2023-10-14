@@ -16,7 +16,7 @@ def treinarRF(df, var):
     x = df.drop(var, axis=1)
 
     xTreino, xTeste, yTreino, yTeste = train_test_split(x, y, test_size=0.2, random_state=2023)
-    modelo = RandomForestRegressor(n_estimators=500, max_depth=10, random_state=2023)
+    modelo = RandomForestRegressor(n_estimators=300, max_depth=7, random_state=2023)
     modelo.fit(xTreino, yTreino)
 
     return modelo, xTreino, xTeste, yTreino, yTeste
