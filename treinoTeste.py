@@ -19,9 +19,6 @@ def treinarRF(df, var):
     modelo = RandomForestRegressor(n_estimators=500, max_depth=10, random_state=2023)
     modelo.fit(xTreino, yTreino)
 
-    print('Conjunto de Treino: %d' % len(yTreino))
-    print('Conjunto de Teste: %d' % len(yTeste))
-
     return modelo, xTreino, xTeste, yTreino, yTeste
 
 

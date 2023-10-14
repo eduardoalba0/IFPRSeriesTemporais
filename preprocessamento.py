@@ -47,6 +47,12 @@ def agrupamentoDiarioMedia(df):
     df = df.groupby(pd.Grouper(key="DATA", freq="D")).mean()
     return df
 
+def agrupamentoDiarioSoma(df):
+    df = df.reset_index()
+    df = df.drop("HORA", axis=1)
+    df = df.groupby(pd.Grouper(key="DATA", freq="D")).sum()
+    return df
+
 
 def agrupamentoMensalMedia(df, datas=None):
     df = df.drop(["DIA", "DIA-SEMANA", "HORA"], axis=1)
@@ -57,6 +63,17 @@ def agrupamentoMensalMedia(df, datas=None):
     else:
         df = df.reset_index()
         df = df.groupby(pd.Grouper(key="DATA", freq="M")).mean()
+    return df
+
+def agrupamentoMensalSoma(df, datas=None):
+    df = df.drop(["DIA", "DIA-SEMANA", "HORA"], axis=1)
+    if datas is not None and np.any(datas):
+        df = df.groupby(pd.cut(df.index, right=True, bins=datas,
+                               labels=pd.to_datetime(datas[1:].tolist())), observed=False).agg(
+            {**{col: "last" for col in df.columns[:2]}, **{col: "sum" for col in df.columns[2:]}})
+    else:
+        df = df.reset_index()
+        df = df.groupby(pd.Grouper(key="DATA", freq="M")).sum()
     return df
 
 
