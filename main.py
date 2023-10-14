@@ -1,47 +1,50 @@
+import sys
+
 import pandas as pd
 
-from analise import analiseCorrelacao
 from preprocessamento import prepararDados, obterLags, agrupamentoDiarioMedia, agrupamentoMensalMedia, tratamentoNulos
 from treinoTeste import plotTreinoTeste, treinarRF, testar
 
 
-def treinamentoAgua(dfAgua):
+def treinoTeste(dfAgua):
     modelo, xTreino, xTeste, yTreino, yTeste = treinarRF(dfAgua, ["CONSUMO (M3)"])
-    yPrevisto = testar(modelo, xTeste, yTeste)
-    dfResultado = pd.DataFrame(xTeste)
-    dfResultado["PREVISÃO CONSUMO (M3)"] = yPrevisto
-    dfResultado["ESPERADO"] = yTeste
-
+    x, yEsperado, yPrevisto = testar(modelo, xTeste, yTeste)
+    dfResultado = pd.DataFrame(x)
+    dfResultado["CONSUMO ESPERADO (M3)"] = yEsperado
+    dfResultado["CONSUMO PREVISTO (M3)"] = yPrevisto
     dfResultado = dfResultado.sort_index()
 
-    plotTreinoTeste(dfResultado.index.values, dfResultado["PREVISÃO CONSUMO (M3)"], dfResultado["ESPERADO"],
+    plotTreinoTeste(dfResultado.index.values, dfResultado["CONSUMO PREVISTO (M3)"],
+                    dfResultado["CONSUMO ESPERADO (M3)"],
                     title="CONSUMO (M3)")
 
 
 def treinamentoEnergia(dfEnergia):
-    modelo, xTreino, xTeste, yTreino, yTeste = treinarRF(dfEnergia, ["ENERGIA ELÉTRICA PONTA (KWh)",
-                                                                     "ENERGIA ELÉTRICA FORA DA PONTA (KWh)"])
-    yPrevisto = testar(modelo, xTeste, yTeste)
+    modelo, xTreino, xTeste, yTreino, yTeste = treinarRF(dfEnergia, ["CONSUMO (KWh)"])
+    x, yEsperado, yPrevisto = testar(modelo, xTeste, yTeste)
     dfPrevisto = pd.DataFrame(yPrevisto)
-    dfResultado = pd.DataFrame(xTeste)
-    dfResultado["ENERGIA ELÉTRICA PONTA (KWh)"] = yTeste["ENERGIA ELÉTRICA PONTA (KWh)"]
-    dfResultado["ENERGIA ELÉTRICA FORA DA PONTA (KWh)"] = yTeste["ENERGIA ELÉTRICA FORA DA PONTA (KWh)"]
-    dfResultado["PREVISÃO ENERGIA ELÉTRICA PONTA (KWh)"] = dfPrevisto.iloc[:, 0].values
-    dfResultado["PREVISÃO ENERGIA ELÉTRICA FORA DA PONTA (KWh)"] = dfPrevisto.iloc[:, 1].values
-
+    dfResultado = pd.DataFrame(x)
+    dfResultado["CONSUMO PREVISTO (KWh)"] = dfPrevisto.iloc[:, 0].values
+    dfResultado["CONSUMO ESPERADO (KWh)"] = yEsperado["CONSUMO (KWh)"]
     dfResultado = dfResultado.sort_index()
 
     plotTreinoTeste(dfResultado.index.values,
-                    dfResultado["PREVISÃO ENERGIA ELÉTRICA PONTA (KWh)"],
-                    dfResultado["ENERGIA ELÉTRICA PONTA (KWh)"])
-
-    plotTreinoTeste(dfResultado.index.values,
-                    dfResultado["PREVISÃO ENERGIA ELÉTRICA FORA DA PONTA (KWh)"],
-                    dfResultado["ENERGIA ELÉTRICA FORA DA PONTA (KWh)"])
+                    dfResultado["CONSUMO PREVISTO (KWh)"],
+                    dfResultado["CONSUMO ESPERADO (KWh)"])
 
 
-dfAgua, dfEnergia, dfClima, dfHorasAula = prepararDados()
+def main(argv):
+    dfAgua, dfEnergia, dfClima, dfHorasAula = prepararDados()
+    dfHorasAula = agrupamentoMensalMedia(dfHorasAula, datas=dfAgua.index.values)
+    dfClima = agrupamentoMensalMedia(dfClima, datas=dfAgua.index.values)
+    dfAgua = dfAgua.iloc[1:, 2:]
+
+    dfMerged = dfAgua.merge(dfHorasAula, right_index=True, left_index=True, how="inner")
+    dfMerged = dfMerged.merge(dfClima, right_index=True, left_index=True, how="inner")
+    dfMerged = obterLags(dfMerged, ["CONSUMO (M3)"], lags=4)
+
+    treinoTeste(dfMerged)
 
 
-dfGroup = agrupamentoMensalMedia(dfHorasAula, datas=dfEnergia.index.values)
-print(dfGroup)
+if __name__ == '__main__':
+    main(sys.argv)

@@ -15,17 +15,18 @@ def prepararDados():
     dfHorasAula["DATA"] = pd.to_datetime((dfHorasAula["DATA"]), format="%d/%m/%Y %H:%M")
 
     dfAgua = dfAgua.set_index("DATA")
-    dfEnergia = dfEnergia.set_index("DATA")
-
-    for coluna in dfAgua.columns[:4]:
+    for coluna in dfAgua.columns:
         dfAgua[coluna] = dfAgua[coluna].astype(int)
-    for coluna in dfClima.columns[4:]:
-        dfClima[coluna] = dfClima[coluna].astype(float)
 
-    for coluna in dfEnergia.columns[:4]:
+    dfEnergia = dfEnergia.set_index("DATA")
+    for coluna in dfEnergia.columns:
         dfEnergia[coluna] = dfEnergia[coluna].astype(int)
-    for coluna in dfClima.columns[4:]:
-        dfClima[coluna] = dfClima[coluna].astype(float)
+    dfEnergia["CONSUMO (KWh)"] = dfEnergia["ENERGIA ELÉTRICA PONTA (KWh)"] + dfEnergia[
+        "ENERGIA ELÉTRICA FORA DA PONTA (KWh)"] + dfEnergia["ENERGIA REATIVA PONTA (KWh)"] + dfEnergia[
+                                     "ENERGIA REATIVA FORA DA PONTA (KWh)"]
+    dfEnergia = dfEnergia.drop(
+        ["ENERGIA ELÉTRICA PONTA (KWh)", "ENERGIA ELÉTRICA FORA DA PONTA (KWh)", "ENERGIA REATIVA PONTA (KWh)",
+         "ENERGIA REATIVA FORA DA PONTA (KWh)"], axis=1)
 
     dfClima = dfClima.set_index("DATA")
     for coluna in dfClima.columns[:5]:
@@ -47,19 +48,26 @@ def agrupamentoDiarioMedia(df):
     return df
 
 
-def agrupamentoMensalMedia(df, datas = None):
+def agrupamentoMensalMedia(df, datas=None):
     df = df.drop(["DIA", "DIA-SEMANA", "HORA"], axis=1)
     if datas is not None and np.any(datas):
-        df = df.groupby(pd.cut(df.index, right=False, bins=datas, labels=[f"Até {pd.to_datetime(limite).strftime('%d/%m/%Y')}" for limite in datas[1:]])).sum()
+        df = df.groupby(pd.cut(df.index, right=True, bins=datas,
+                               labels=pd.to_datetime(datas[1:].tolist())), observed=False).agg(
+            {**{col: "last" for col in df.columns[:2]}, **{col: "mean" for col in df.columns[2:]}})
     else:
         df = df.reset_index()
         df = df.groupby(pd.Grouper(key="DATA", freq="M")).mean()
     return df
 
 
-def obterLags(df):
-    for coluna in df.columns.values:
-        for i in range(1, 3 + 1):
+def obterLags(df, vars=None, lags=3):
+    if vars is not None:
+        colunas = vars
+    else:
+        colunas = df.columns.values
+
+    for coluna in colunas:
+        for i in range(1, lags + 1):
             df[f'{coluna}_LAG_{i}'] = df[coluna].shift(i)
     return df.sort_index(axis=1)
 
