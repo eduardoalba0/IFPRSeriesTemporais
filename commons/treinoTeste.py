@@ -8,7 +8,7 @@ from sklearn.svm import SVR
 from commons.preprocessamento import obterLags
 
 
-def treinarRF(df, var, estimators=300, maxDepth=7, minSampleLeaf=1, nLags=0):
+def treinarRF(df, var, estimators=300, maxDepth=7, minSampleLeaf=1, nLags=0, semente=1234):
     df = obterLags(df, var, lags=nLags)
 
     df = df.dropna()
@@ -18,7 +18,7 @@ def treinarRF(df, var, estimators=300, maxDepth=7, minSampleLeaf=1, nLags=0):
     y = df[var]
     x = df.drop(var, axis=1)
 
-    xTreino, xTeste, yTreino, yTeste = train_test_split(x, y, test_size=0.2, random_state=2023)
+    xTreino, xTeste, yTreino, yTeste = train_test_split(x, y, test_size=0.2, random_state=semente)
     modelo = RandomForestRegressor(n_estimators=estimators, max_depth=maxDepth, min_samples_leaf=minSampleLeaf,
                                    random_state=2023)
     modelo.fit(xTreino, yTreino)
