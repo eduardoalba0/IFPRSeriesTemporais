@@ -20,12 +20,6 @@ def prepararDados():
     dfEnergia["MES"] = dfEnergia["DATA"].dt.month
     dfEnergia = dfEnergia.set_index("DATA")
     dfEnergia = dfEnergia.astype(int)
-    dfEnergia["CONSUMO (KWh)"] = dfEnergia["ENERGIA ELÉTRICA PONTA (KWh)"] + dfEnergia[
-        "ENERGIA ELÉTRICA FORA DA PONTA (KWh)"] + dfEnergia["ENERGIA REATIVA PONTA (KWh)"] + dfEnergia[
-                                     "ENERGIA REATIVA FORA DA PONTA (KWh)"]
-    dfEnergia = dfEnergia.drop(
-        ["ENERGIA ELÉTRICA PONTA (KWh)", "ENERGIA ELÉTRICA FORA DA PONTA (KWh)", "ENERGIA REATIVA PONTA (KWh)",
-         "ENERGIA REATIVA FORA DA PONTA (KWh)"], axis=1)
 
     dfClima["ANO"] = dfClima["DATA"].dt.year
     dfClima["MES"] = dfClima["DATA"].dt.month

@@ -1,27 +1,41 @@
+import time
+
 from commons.exploracao import plotTreinoTeste
+from commons.ga_rf import GARF
+from commons.ga_svr import GASVR
 from commons.preprocessamento import prepararDados, agrupamentoMensalMedia, obterLags
-from commons.treinoTeste import treinarRF, testar
+from commons.treinoTeste import treinarRF, treinarSVR
 
-dfAgua, dfEnergia, dfClima, dfHorasAula = prepararDados()
-variavel = "CONSUMO (M3)"
+if __name__ == '__main__':
+    dfAgua, dfEnergia, dfClima, dfHorasAula = prepararDados()
 
-print("------------------------ INICIANDO TESTE DO CONSUMO DE ÁGUA ------------------------ ")
-dfHorasAula = agrupamentoMensalMedia(dfHorasAula, datas=dfAgua.index.values)
-dfClima = agrupamentoMensalMedia(dfClima, datas=dfAgua.index.values)
-dfAgua = dfAgua.iloc[1:, :]
+    print("------------------------ INICIANDO TESTE DO CONSUMO DE ÁGUA ------------------------ ")
 
-dfMerged = dfAgua
-dfMerged = dfAgua.merge(dfHorasAula, right_index=True, left_index=True, how="inner")
-dfMerged = dfMerged.merge(dfClima, right_index=True, left_index=True, how="inner")
+    variavel = "CONSUMO"
 
-modelo, xTreino, xTeste, yTreino, yTeste = treinarRF(dfMerged, variavel, nLags=6)
+    dfHorasAula = agrupamentoMensalMedia(dfHorasAula, datas=dfAgua.index.values)
+    dfClima = agrupamentoMensalMedia(dfClima, datas=dfAgua.index.values)
+    dfAgua = dfAgua.iloc[1:, :]
 
-print("Conjunto de Treinamento: %d" % len(xTreino))
-print("Conjunto de Teste: %d" % len(xTeste))
+    dfMerged = dfAgua.merge(dfHorasAula, right_index=True, left_index=True, how="inner")
+    dfMerged = dfMerged.merge(dfClima, right_index=True, left_index=True, how="inner")
 
-dfResultado, dfResumo = testar(modelo, xTeste, yTeste)
+    t_inicio = time.time()
+    #ga = GARF(dfMerged, variavel, 100, 100, 0.5, 5, 1234)
+    ga = GASVR(dfMerged, variavel, 100, 100, 0.5, 5, 1234)
+    populacao = ga.run()
+    best = populacao[0]
+    t_fim = time.time()
+    print(f"Tempo de execução: {t_fim - t_inicio} segundos")
 
-for variavel in variavel:
-    plotTreinoTeste(dfResultado.index.values, dfResultado[f"{variavel} - PREVISTO"],
-                    dfResultado[f"{variavel} - ESPERADO"], title="CONSUMO DE ÁGUA")
-print(dfResumo.head())
+    #modelo, dfResultado, dfResumo = treinarRF(dfMerged, variavel, estimators=best.n_estimators,
+    #                                                     maxDepth=best.max_depth, minSampleLeaf=best.min_sample_leaf,
+    #                                                     nLags=best.n_lags, folds=12)
+
+    modelo, dfResultado, dfResumo = treinarSVR(dfMerged, variavel, kernel=best.kernel,
+                                               epsilon=best.epsilon, gamma=best.gamma, c=best.c,
+                                               nLags=best.n_lags, folds=12)
+
+    plotTreinoTeste(dfResultado.index.values, dfResultado["PREVISTO"],
+                        dfResultado["ESPERADO"], title="CONSUMO DE ÁGUA")
+    print(dfResumo.head())

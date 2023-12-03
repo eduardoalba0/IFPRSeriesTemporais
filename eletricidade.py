@@ -1,19 +1,19 @@
 import time
 
-import numpy as np
 import pandas as pd
 
-from commons.exploracao import plotTreinoTeste, acf
+from commons.exploracao import plotTreinoTeste
 from commons.ga_rf import GARF
+from commons.ga_svr import GASVR
 from commons.preprocessamento import prepararDados, agrupamentoMensalMedia
-from commons.treinoTeste import treinarRF, testar
+from commons.treinoTeste import treinarRF, treinarSVR
 
 if __name__ == '__main__':
     dfAgua, dfEnergia, dfClima, dfHorasAula = prepararDados()
 
     print("------------------------ INICIANDO TESTE DO CONSUMO DE ENERGIA ------------------------ ")
 
-    variavel = "CONSUMO (KWh)"
+    variavel = "CONSUMO"
 
     dfHorasAula = agrupamentoMensalMedia(dfHorasAula, datas=dfEnergia.index.values)
     dfClima = agrupamentoMensalMedia(dfClima, datas=dfEnergia.index.values)
@@ -23,23 +23,22 @@ if __name__ == '__main__':
     dfMerged = dfMerged.merge(dfClima, right_index=True, left_index=True, how="inner")
 
     t_inicio = time.time()
-    ga_rf = GARF(dfMerged, variavel, 50, 50, 0.5, 1234)
-    populacao = ga_rf.run()
+    #ga = GARF(dfMerged, variavel, 100, 100, 0.5, 5, 1234)
+    ga = GASVR(dfMerged, variavel, 100, 100, 0.5, 5, 1234)
+    populacao = ga.run()
     best = populacao[0]
     t_fim = time.time()
     print(f"Tempo de execução: {t_fim - t_inicio} segundos")
 
-    dfPopulacao = pd.DataFrame(populacao)
+    #modelo, dfResultado, dfResumo = treinarRF(dfMerged, variavel, estimators=best.n_estimators,
+    #                                          maxDepth=best.max_depth, minSampleLeaf=best.min_sample_leaf,
+    #                                          nLags=best.n_lags, folds=12)
 
-    modelo, xTreino, xTeste, yTreino, yTeste = treinarRF(dfMerged, variavel, estimators=best.n_estimators,
-                                                         maxDepth=best.max_depth, minSampleLeaf=best.min_sample_leaf,
-                                                         nLags=best.n_lags)
 
-    print("Conjunto de Treinamento: %d" % len(xTreino))
-    print("Conjunto de Teste: %d" % len(xTeste))
-
-    dfResultado, dfResumo = testar(modelo, xTeste, yTeste)
+    modelo, dfResultado, dfResumo = treinarSVR(dfMerged, variavel, kernel=best.kernel,
+                                               epsilon=best.epsilon, gamma=best.gamma, c=best.c,
+                                               nLags=best.n_lags, folds=12)
 
     plotTreinoTeste(dfResultado.index.values, dfResultado["PREVISTO"],
-                    dfResultado["ESPERADO"], title="CONSUMO DE ENERGIA - RF")
+                    dfResultado["ESPERADO"], title="CONSUMO DE ENERGIA")
     print(dfResumo.head())

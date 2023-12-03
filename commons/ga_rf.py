@@ -1,62 +1,27 @@
-import multiprocessing
 import random
 import threading
 
-import pandas as pd
+from commons.ga import GA, Individuo
+from commons.treinoTeste import treinarRF
 
-from commons.treinoTeste import treinarRF, testar
 
-
-class GARF:
-    def __init__(self, dados, variaveis, n_individuos, n_geracoes, tx_mutacao, semente=None):
-        random.seed(semente)
-        self.semente= semente
-        self.dados = dados
-        self.variaveis = variaveis
-        self.n_individuos = n_individuos
-        self.n_geracoes = n_geracoes
-        self.tx_mutacao = tx_mutacao
-
-    def run(self):
-        self.init_populacao()
-        self.calcular_fitness()
-        for _ in range(self.n_geracoes):
-            filho = self.crossover()
-            filho = self.mutation(filho)
-            self.populacao.append(filho)
-            self.calcular_fitness()
-            self.populacao.pop(len(self.populacao) - 1)
-        return self.populacao
-
+class GARF(GA):
     def init_populacao(self):
         self.populacao = []
         for _ in range(self.n_individuos):
             individuo = IndividuoRF()
             self.populacao.append(individuo)
 
-    def calcular_fitness(self):
-        populacao_filtrada = list(filter(lambda ind: ind.fitness is None, self.populacao))
-        tam_parte = len(populacao_filtrada) // 2
-        metade_1 = threading.Thread(target=self.thread_calc_fitness(populacao_filtrada[0:tam_parte]))
-        metade_2 = threading.Thread(target=self.thread_calc_fitness(populacao_filtrada[tam_parte:]))
-        metade_1.start()
-        metade_2.start()
-        metade_1.join()
-        metade_2.join()
-
-        self.populacao = sorted(self.populacao, key=lambda ind: ind.fitness)
-
     def thread_calc_fitness(self, individuos):
         for individuo in individuos:
-            modelo, xTreino, xTeste, yTreino, yTeste = treinarRF(self.dados, self.variaveis, individuo.n_estimators,
+            modelo, dfResultado, dfResumo = treinarRF(self.dados, self.variaveis, individuo.n_estimators,
                                                                  individuo.max_depth, individuo.min_sample_leaf,
-                                                                 individuo.n_lags, self.semente)
-            dfResultado, dfResumo = testar(modelo, xTeste, yTeste)
-            individuo.fitness = dfResumo.loc[0, "MSE (KWh)"]
+                                                                 individuo.n_lags, self.folds)
+            individuo.fitness = dfResumo.loc[0, "MSE"]
 
     def crossover(self):
-        pai = self.populacao[0]
-        mae = self.populacao[1]
+        pai = random.choice(self.populacao)
+        mae = random.choice(self.populacao)
         filho = IndividuoRF()
         filho.n_lags = random.choice([pai.n_lags, mae.n_lags])
         filho.n_estimators = random.choice([pai.n_estimators, mae.n_estimators])
@@ -81,17 +46,12 @@ class GARF:
         return individuo
 
 
-class IndividuoRF:
+class IndividuoRF(Individuo):
     def __init__(self):
-        self.rand_n_lags()
+        super().__init__()
         self.rand_n_estimators()
         self.rand_max_depth()
         self.rand_min_sample_leaf()
-        self.fitness = None
-        self.mutacao = False
-
-    def rand_n_lags(self):
-        self.n_lags = random.randint(0, 20)
 
     def rand_n_estimators(self):
         self.n_estimators = random.randint(2, 200)
