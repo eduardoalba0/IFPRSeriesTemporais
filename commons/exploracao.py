@@ -13,6 +13,7 @@ def acf(serie, variaveis):
     for variavel in variaveis:
         tsaplots.plot_acf(serie[variavel], lags=12, title="ACF " + variavel)
 
+
 def analiseCorrelacao(df):
     df = df.reset_index(drop=True)
     df = df.dropna()
@@ -50,11 +51,31 @@ def explorarDados(dfAgua, dfEnergia, dfClima):
                titulo="Condições Climáticas da região de Palmas no período de Agosto de 2018 a Setembro de 2023")
 
 
-def plotTreinoTeste(x, valoresPrevistos, valoresEsperados, title="", xlabel="Data", ylabel=""):
+def plotTreinoTeste(valoresPrevistos, valoresObservados, title="", xlabel="Data", ylabel=""):
     plt.figure(figsize=(20, 10), dpi=100)
-    plt.plot(x, valoresPrevistos, label='Valores Previstos')
-    plt.plot(x, valoresEsperados, label='Valores Esperados')
+    plt.plot(valoresObservados.index.values, valoresPrevistos, label='Valores Previstos')
+    plt.plot(valoresObservados.index.values, valoresObservados, label='Valores Observados')
     plt.gca().set(title=title, xlabel=xlabel, ylabel=ylabel)
     plt.xticks(rotation=90)
+    plt.grid(True)
     plt.legend()
+    plt.show()
+
+
+def plotPrevisao(previsao, original, title="", xlabel="Data", ylabel=""):
+    plt.figure(figsize=(20, 10), dpi=100)
+    plt.plot(previsao.index.values, previsao, label='Valores Previstos')
+    plt.plot(original.index.values, original, label='Série Original')
+    plt.gca().set(title=title, xlabel=xlabel, ylabel=ylabel)
+    plt.grid(True)
+    plt.legend()
+    plt.xticks(rotation=90)
+    plt.show()
+
+def plotHistResiduos(valoresPrevistos, valoresObservados, title="Histograma de Resíduos", xlabel="Resíduos", ylabel="Frequência"):
+    plt.figure(figsize=(20, 10), dpi=100)
+    plt.hist((valoresObservados - valoresPrevistos), bins='auto', color='blue', alpha=0.7)
+    plt.xlabel('Resíduos')
+    plt.ylabel('Frequência')
+    plt.grid(True)
     plt.show()

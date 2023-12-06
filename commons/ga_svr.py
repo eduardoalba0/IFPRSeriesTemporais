@@ -1,22 +1,53 @@
 import random
 import threading
-
-from commons.ga import GA, Individuo
 from commons.treinoTeste import treinarRF, treinarSVR
 
 
-class GASVR(GA):
+class GASVR:
+    def __init__(self, dados, variaveis, n_individuos, n_geracoes, tx_mutacao, folds=5, semente=None):
+        random.seed(semente)
+        self.semente = semente
+        self.folds = folds
+        self.dados = dados
+        self.variaveis = variaveis
+        self.n_individuos = n_individuos
+        self.n_geracoes = n_geracoes
+        self.tx_mutacao = tx_mutacao
+
+    def run(self):
+        self.init_populacao()
+        self.calcular_fitness()
+        for _ in range(self.n_geracoes):
+            filho = self.crossover()
+            filho = self.mutation(filho)
+            self.populacao.append(filho)
+            self.calcular_fitness()
+            self.populacao.pop(len(self.populacao) - 1)
+        return self.populacao
+
     def init_populacao(self):
         self.populacao = []
         for _ in range(self.n_individuos):
             individuo = IndividuoSVR()
             self.populacao.append(individuo)
 
+    def calcular_fitness(self):
+        populacao_filtrada = list(filter(lambda ind: ind.fitness is None, self.populacao))
+        tam_parte = len(populacao_filtrada) // 2
+        metade_1 = threading.Thread(target=self.thread_calc_fitness(populacao_filtrada[0:tam_parte]))
+        metade_2 = threading.Thread(target=self.thread_calc_fitness(populacao_filtrada[tam_parte:]))
+        metade_1.start()
+        metade_2.start()
+        metade_1.join()
+        metade_2.join()
+
+        self.populacao = sorted(self.populacao, key=lambda ind: ind.fitness)
+
     def thread_calc_fitness(self, individuos):
         for individuo in individuos:
             modelo, dfResultado, dfResumo = treinarSVR(self.dados, self.variaveis, individuo.kernel,
-                                                       individuo.epsilon, individuo.gamma, individuo.c,
-                                                       individuo.n_lags, self.folds)
+                                                       individuo.epsilon, individuo.c, individuo.n_lags,
+                                                       self.folds)
             individuo.fitness = dfResumo.loc[0, "MSE"]
 
     def crossover(self):
@@ -26,12 +57,14 @@ class GASVR(GA):
         filho.n_lags = random.choice([pai.n_lags, mae.n_lags])
         filho.kernel = random.choice([pai.kernel, mae.kernel])
         filho.epsilon = random.choice([pai.epsilon, mae.epsilon])
-        filho.gamma = random.choice([pai.gamma, mae.gamma])
         filho.c = random.choice([pai.c, mae.c])
 
         return filho
 
     def mutation(self, individuo):
+        if random.uniform(0, 1) < self.tx_mutacao:
+            individuo.n_lags = round(individuo.n_lags * (random.uniform(0.5, 1.2)))
+            individuo.mutacao = True
         if random.uniform(0, 1) < self.tx_mutacao:
             individuo.n_lags = round(individuo.n_lags * random.uniform(0.5, 1.2))
             individuo.mutacao = True
@@ -47,13 +80,17 @@ class GASVR(GA):
         return individuo
 
 
-class IndividuoSVR(Individuo):
+class IndividuoSVR:
     def __init__(self):
-        super().__init__()
+        self.rand_n_lags()
         self.rand_kernel()
         self.rand_epsilon()
-        self.rand_gamma()
         self.rand_c()
+        self.fitness = None
+        self.mutacao = False
+
+    def rand_n_lags(self):
+        self.n_lags = random.randint(0, 20)
 
     def rand_kernel(self):
         self.kernel = random.choice(["poly", "sigmoid", "rbf"])
@@ -61,11 +98,8 @@ class IndividuoSVR(Individuo):
     def rand_epsilon(self):
         self.epsilon = random.uniform(0, 1)
 
-    def rand_gamma(self):
-        self.gamma = random.choice(["auto", "scale"])
-
     def rand_c(self):
         self.c = random.uniform(0, 2000)
 
     def __str__(self):
-        return f'fitness (MAPE): {self.fitness}, n_lags: {self.n_lags}, kernel: {self.kernel}, epsilon: {self.epsilon}, gamma: {self.gamma}, C: {self.c}, mutacao: {self.mutacao}'
+        return f'fitness (MAPE): {self.fitness}, n_lags: {self.n_lags}, kernel: {self.kernel}, epsilon: {self.epsilon}, C: {self.c}, mutacao: {self.mutacao}'

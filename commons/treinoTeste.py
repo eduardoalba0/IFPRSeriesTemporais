@@ -8,24 +8,44 @@ from sklearn.svm import SVR
 from commons.preprocessamento import obterLags
 
 
-def treinarRF(df, var, estimators, maxDepth, minSampleLeaf, nLags, folds):
+def treinarRF(df, var, estimators, maxDepth, nLags, folds, semente):
     if nLags > 0:
         df = obterLags(df, var, lags=nLags)
+
+    if "DATA" in df.columns:
+        df = df.drop("DATA", axis=1)
+
+    df = df.dropna()
+    df = df.sort_index(axis=1)
+
+    modelo = RandomForestRegressor(n_estimators=estimators, max_depth=maxDepth,
+                                   random_state=semente)
+
+    return treino_teste_validacao_cruzada(df, var, modelo, folds)
+
+
+def treinarSVR(df, var, kernel, epsilon, c, nLags, folds):
+    df = df.drop(columns=df.filter(like='_LAG_').columns, axis=1)
+    if nLags > 0:
+        df = obterLags(df, var, lags=nLags)
+    if "DATA" in df.columns:
+        df = df.drop("DATA", axis=1)
+
+    df = df.dropna()
+
+    modelo = SVR(kernel=kernel, epsilon=epsilon, C=c)
+
+    return treino_teste_validacao_cruzada(df, var, modelo, folds)
+
+
+def treino_teste_validacao_cruzada(df, var, modelo, folds):
+    y = df[var]
+    x = df.drop(var, axis=1)
     x_testes = pd.DataFrame()
     y_testes = pd.DataFrame()
     y_previstos = pd.DataFrame()
 
-    df = df.dropna()
-    if "DATA" in df.columns:
-        df = df.drop("DATA", axis=1)
-
-    y = df[var]
-    x = df.drop(var, axis=1)
-
-    modelo = RandomForestRegressor(n_estimators=estimators, max_depth=maxDepth, min_samples_leaf=minSampleLeaf,
-                                   random_state=2023)
-
-    for treino_index, teste_index in TimeSeriesSplit(n_splits=folds, test_size=1).split(x, y):
+    for treino_index, teste_index in TimeSeriesSplit(n_splits=max(folds,5), test_size=1).split(x, y):
         x_treino, x_teste = x.iloc[treino_index], x.iloc[teste_index]
         y_treino, y_teste = y.iloc[treino_index], y.iloc[teste_index]
         modelo.fit(x_treino, y_treino)
@@ -34,59 +54,44 @@ def treinarRF(df, var, estimators, maxDepth, minSampleLeaf, nLags, folds):
         y_testes = pd.concat([y_testes, pd.DataFrame(y_teste)], axis=0)
         y_previstos = pd.concat([y_previstos, pd.DataFrame(y_previsto)], axis=0)
 
-    dfResultado = pd.DataFrame(x_testes)
-    dfResumo = pd.DataFrame()
-    yPrevisto = pd.DataFrame(y_previstos)
-    if y_testes is not None and np.any(y_testes):
-        dfResultado["ESPERADO"] = y_testes
-        dfResultado["PREVISTO"] = yPrevisto.values
-        dfResumo.loc[0, "MAE"] = mean_absolute_error(y_testes, yPrevisto.values)
-        dfResumo.loc[0, "MAPE (%)"] = mean_absolute_percentage_error(y_testes, yPrevisto.values) * 100
-        dfResumo.loc[0, "MSE"] = mean_squared_error(y_testes, yPrevisto.values)
-        dfResumo.loc[0, "RMSE"] = np.sqrt(mean_squared_error(y_testes, yPrevisto.values))
-        dfResumo = dfResumo.round(decimals=2)
+    dfResultado, dfResumo = medidas_desempenho(x_testes, y_testes, y_previstos)
 
-    dfResultado = dfResultado.sort_index()
+    df["PREVISTO"] = df[var]
+    df["OBSERVADO"] = df[var]
+    df.update(dfResultado)
+    dfResultado = df[["PREVISTO", "OBSERVADO"]]
 
     return modelo, dfResultado, dfResumo
 
 
-def treinarSVR(df, var, kernel, epsilon, gamma, c, nLags, folds):
-    if nLags > 0:
-        df = obterLags(df, var, lags=nLags)
-    x_testes = pd.DataFrame()
-    y_testes = pd.DataFrame()
-    y_previstos = pd.DataFrame()
-
-    df = df.dropna()
-    if "DATA" in df.columns:
-        df = df.drop("DATA", axis=1)
-
+def treino_teste_sequencial(df, var, modelo, folds):
     y = df[var]
     x = df.drop(var, axis=1)
 
-    modelo = SVR(kernel=kernel, epsilon=epsilon, gamma=gamma, C=c)
-    for treino_index, teste_index in TimeSeriesSplit(n_splits=folds, test_size=1).split(x, y):
-        x_treino, x_teste = x.iloc[treino_index], x.iloc[teste_index]
-        y_treino, y_teste = y.iloc[treino_index], y.iloc[teste_index]
-        modelo.fit(x_treino, y_treino)
-        y_previsto = modelo.predict(x_teste)
-        x_testes = pd.concat([x_testes, pd.DataFrame(x_teste)], axis=0)
-        y_testes = pd.concat([y_testes, pd.DataFrame(y_teste)], axis=0)
-        y_previstos = pd.concat([y_previstos, pd.DataFrame(y_previsto)], axis=0)
+    x_treino, x_teste, y_treino, y_teste = train_test_split(x, y, test_size=folds, shuffle=False)
 
-    dfResultado = pd.DataFrame(x_testes)
+    modelo.fit(x_treino, y_treino)
+    y_previstos = modelo.predict(x_teste)
+
+    dfResultado, dfResumo = medidas_desempenho(x_teste, y_teste, y_previstos)
+    df["PREVISTO"] = df[var]
+    df["OBSERVADO"] = df[var]
+    df.update(dfResultado)
+    dfResultado = df[["PREVISTO", "OBSERVADO"]]
+    return modelo, dfResultado, dfResumo
+
+
+def medidas_desempenho(x_teste, y_teste, y_previsto):
+    dfResultado = pd.DataFrame(x_teste)
     dfResumo = pd.DataFrame()
-    yPrevisto = pd.DataFrame(y_previstos)
-    if y_testes is not None and np.any(y_testes):
-        dfResultado["ESPERADO"] = y_testes
+    yPrevisto = pd.DataFrame(y_previsto)
+    if y_teste is not None and np.any(y_teste):
+        dfResultado["OBSERVADO"] = y_teste
         dfResultado["PREVISTO"] = yPrevisto.values
-        dfResumo.loc[0, "MAE"] = mean_absolute_error(y_testes, yPrevisto.values)
-        dfResumo.loc[0, "MAPE (%)"] = mean_absolute_percentage_error(y_testes, yPrevisto.values) * 100
-        dfResumo.loc[0, "MSE"] = mean_squared_error(y_testes, yPrevisto.values)
-        dfResumo.loc[0, "RMSE"] = np.sqrt(mean_squared_error(y_testes, yPrevisto.values))
+        dfResumo.loc[0, "MAE"] = mean_absolute_error(y_teste, yPrevisto.values)
+        dfResumo.loc[0, "MAPE (%)"] = mean_absolute_percentage_error(y_teste, yPrevisto.values) * 100
+        dfResumo.loc[0, "MSE"] = mean_squared_error(y_teste, yPrevisto.values)
+        dfResumo.loc[0, "RMSE"] = np.sqrt(mean_squared_error(y_teste, yPrevisto.values))
         dfResumo = dfResumo.round(decimals=2)
 
-    dfResultado = dfResultado.sort_index()
-
-    return modelo, dfResultado, dfResumo
+    return dfResultado, dfResumo
