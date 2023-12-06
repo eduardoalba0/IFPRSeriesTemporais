@@ -1,3 +1,4 @@
+import threading
 import time
 
 from commons.exploracao import plotTreinoTeste, plotPrevisao, plotHistResiduos
@@ -10,9 +11,9 @@ from commons.treinoTeste import treinarRF, treinarSVR
 if __name__ == '__main__':
     dfAgua, dfEnergia, dfClima, dfHorasAula = prepararDados()
 
-    h_previsoes = 3
-    individuos = 10
-    geracoes = 100
+    h_previsoes = 6
+    individuos = 1
+    geracoes = 1
 
     print("------------------------ INICIANDO TESTE DO CONSUMO DE ENERGIA ------------------------ ")
 

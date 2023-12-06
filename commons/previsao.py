@@ -4,24 +4,22 @@ from dateutil.relativedelta import relativedelta
 from commons.preprocessamento import obterLags
 
 
-def prever(modelo, df, var, h, lags):
+def prever(modelo, df, var, h, nLags):
     x = df.copy()
     x = x.reset_index()
     x["DATA"] = x["DATA"].apply(lambda data: data + pd.DateOffset(months=h))
-    x["MES"] = x['DATA'].dt.month
-    x["ANO"] = x['DATA'].dt.year
-    x[var] = x[var].shift(0 - h)
     x = x.set_index("DATA")
+    x_previsao = x[["ANO", "MES", var]].merge(x.drop(["ANO", "MES", var],axis=1).shift(12).tail((h)), right_index=True, left_index=True, how="inner")
 
     y_previsto = []
-    for index in x.tail(h).index:
-        if lags > 0:
-            for i in range(1, lags + 1):
-                lag = x[var].shift(i)
-                x[f'{var}_LAG_{i}'] = lag
-        x = x.sort_index(axis=1)
-        x_previsao = pd.DataFrame(x.loc[index, :].drop(var)).T
-        y = modelo.predict(x_previsao)
+    for index in x_previsao.index:
+        if nLags > 0:
+            x_previsao = obterLags(x, var, nLags).tail(h)
+        else:
+            x_previsao = x_previsao.sort_index(axis=1)
+        x_previsao = x_previsao.sort_index(axis=1)
+        x_aux = pd.DataFrame(x_previsao.loc[index]).transpose()
+        y = modelo.predict(x_aux.drop(var, axis=1))
         x.loc[index, "CONSUMO"] = y
         y_previsto.append(y)
 

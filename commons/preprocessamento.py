@@ -60,18 +60,19 @@ def agrupamentoMensal(df, datas=None, strategy="mean"):
 
 
 def obterLags(df, var=None, lags=3):
+    dfCopy = df.copy()
     if var is not None:
         colunas = [var]
     else:
-        colunas = df.columns.values
+        colunas = dfCopy.columns.values
 
     for coluna in colunas:
         if coluna in ["SEG", "TER", "QUA", "QUI", "SEX", "SAB", "DOM"]:
             continue
         for i in range(1, lags + 1):
-            lag = df[coluna].shift(i)
-            df[f'{coluna}_LAG_{i}'] = lag
-    return df.sort_index(axis=1)
+            lag = dfCopy[coluna].shift(i)
+            dfCopy[f'{var}_LAG_' + "{:02d}".format(i)] = lag
+    return dfCopy.sort_index(axis=1)
 
 
 def tratamentoNulosDropLinhas(df):
