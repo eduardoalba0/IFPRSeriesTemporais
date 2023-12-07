@@ -32,6 +32,9 @@ def treinarSVR(df, var, kernel, epsilon, c, nLags, folds):
     if "DATA" in df.columns:
         df = df.set_index("DATA")
 
+    df = df.dropna()
+    df = df.sort_index(axis=1)
+
     modelo = SVR(kernel=kernel, epsilon=epsilon, C=c)
 
     return treino_teste_sequencial(df, var, modelo, folds, nLags)
@@ -84,7 +87,7 @@ def treino_teste_sequencial(df, var, modelo, h, nLags):
             x_teste = x_teste.sort_index(axis=1)
         x_aux = pd.DataFrame(x_teste.loc[index]).transpose()
         y = modelo.predict(x_aux.drop(var, axis=1))
-        x.loc[index, "CONSUMO"] = y
+        x.loc[index, "CONSUMO"] = int(y)
         y_previsto.append(y)
 
     dfResultado, dfResumo = medidas_desempenho(x_teste, y_teste, y_previsto)

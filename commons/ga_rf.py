@@ -24,6 +24,7 @@ class GARF:
             self.populacao.append(filho)
             self.calcular_fitness()
             self.populacao.pop(len(self.populacao) - 1)
+            print("Geracao: ", _)
         return self.populacao
 
     def init_populacao(self):
@@ -64,9 +65,13 @@ class GARF:
         if random.uniform(0, 1) < self.tx_mutacao:
             individuo.n_lags = round(individuo.n_lags * (random.uniform(0.5, 1.2)))
             individuo.mutacao = True
+            if individuo.n_lags > 24:
+                individuo.n_lags = 24
         if random.uniform(0, 1) < self.tx_mutacao:
             individuo.n_lags = round(individuo.n_lags * (random.uniform(0.5, 1.2)))
             individuo.mutacao = True
+            if individuo.n_lags > 24:
+                individuo.n_lags = 24
         if random.uniform(0, 1) < self.tx_mutacao:
             individuo.n_estimators = round(individuo.n_estimators * (random.uniform(0.5, 1.2)))
             individuo.mutacao = True

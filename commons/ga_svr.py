@@ -1,6 +1,6 @@
 import random
 import threading
-from commons.treinoTeste import treinarRF, treinarSVR
+from commons.treinoTeste import treinarSVR
 
 
 class GASVR:
@@ -23,6 +23,7 @@ class GASVR:
             self.populacao.append(filho)
             self.calcular_fitness()
             self.populacao.pop(len(self.populacao) - 1)
+            print("Geracao: ", _)
         return self.populacao
 
     def init_populacao(self):
@@ -65,9 +66,13 @@ class GASVR:
         if random.uniform(0, 1) < self.tx_mutacao:
             individuo.n_lags = round(individuo.n_lags * (random.uniform(0.5, 1.2)))
             individuo.mutacao = True
+            if individuo.n_lags > 24:
+                individuo.n_lags = 24
         if random.uniform(0, 1) < self.tx_mutacao:
             individuo.n_lags = round(individuo.n_lags * random.uniform(0.5, 1.2))
             individuo.mutacao = True
+            if individuo.n_lags > 24:
+                individuo.n_lags = 24
         if random.uniform(0, 1) < self.tx_mutacao:
             individuo.kernel = random.choice(["poly", "sigmoid", "rbf"])
             individuo.mutacao = True
@@ -76,6 +81,8 @@ class GASVR:
             individuo.mutacao = True
         if random.uniform(0, 1) < self.tx_mutacao:
             individuo.c = round(individuo.c * random.uniform(0.5, 1.2))
+            if individuo.c == 0:
+                individuo.c = 1
             individuo.mutacao = True
         return individuo
 
@@ -99,7 +106,7 @@ class IndividuoSVR:
         self.epsilon = random.uniform(0, 1)
 
     def rand_c(self):
-        self.c = random.uniform(0, 2000)
+        self.c = random.uniform(0, 3000)
 
     def __str__(self):
         return f'fitness (MAPE): {self.fitness}, n_lags: {self.n_lags}, kernel: {self.kernel}, epsilon: {self.epsilon}, C: {self.c}, mutacao: {self.mutacao}'
