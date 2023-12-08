@@ -1,4 +1,3 @@
-import threading
 import time
 
 from commons.exploracao import plotTreinoTeste, plotPrevisao, plotHistResiduos
@@ -13,15 +12,28 @@ if __name__ == '__main__':
 
     var = "CONSUMO"
 
-    h_previsoes = 3
-    individuos = 2
-    geracoes = 10
-    algoritmo = "SVR"  # SVR ou RF
-    previsao = "água"  # água ou energia
-    clima = True  # True ou False
-    otimizar = True  # True ou False
+    h_previsoes = 12
 
-    # best =
+    individuos = 500
+    geracoes = 1000
+    algoritmo = "RF"  # SVR ou RF
+    previsao = "energia"  # água ou energia
+    clima = True  # True ou False
+    otimizar = False  # True ou False
+
+    # bestSVR_A_Clima = IndividuoSVR().create(2, "poly", 0, 4373) #MELHOR H-6 AGUA //
+    # bestSVR_A_SClima = IndividuoSVR().create(1, "poly", 0, 3771)
+    #
+    # bestSVR_E_Clima = IndividuoSVR().create(1, "rbf", 0, 2371) #MELHOR H-3 ENERGIA
+    # bestSVR_E_SClima = IndividuoSVR().create(1, "rbf", 0, 1917) #MELHOR H-6 ENERGIA
+    #
+    # bestRF_A_Clima = IndividuoRF().create(3, 6, 143, (12 * 100 * 200)) #MELHOR H-12 AGUA
+    # bestRF_A_SClima = IndividuoRF().create(4, 3, 147, (12 * 200 * 500)) #MELHOR H-3 AGUA
+    #
+    bestRF_E_Clima = IndividuoRF().create(4, 33, 114, (12 * 500 * 1000))  # MELHOR H-12 ENERGIA
+    # bestRF_E_SClima = IndividuoRF().create(1, 181, 125, (12 * 200 * 500))
+
+    best = bestRF_E_Clima
 
     if previsao == "água":
         print("------------------------ INICIANDO TESTE DO CONSUMO DE ÁGUA ------------------------ ")
@@ -30,14 +42,14 @@ if __name__ == '__main__':
         print("------------------------ INICIANDO TESTE DO CONSUMO DE ENERGIA ELÉTRICA ------------------------ ")
         df = dfEnergia
 
-    dfHorasAula = agrupamentoMensal(agrupamentoDiarioMedia(dfHorasAula), datas=df.index.values, strategy="sum")
-    dfClima = agrupamentoMensal(dfClima, datas=df.index.values, strategy="sum")
+    dfHorasAula = agrupamentoMensal(agrupamentoDiarioMedia(dfHorasAula), datas=df["DATA"], strategy="sum")
+    dfClima = agrupamentoMensal(dfClima, datas=df["DATA"], strategy="sum")
     df = df.iloc[1:, :]
 
-    dfMerged = df.merge(dfHorasAula, right_index=True, left_index=True, how="inner")
+    dfMerged = df.merge(dfHorasAula, on="DATA", how="inner")
 
     if clima:
-        dfMerged = dfMerged.merge(dfClima, right_index=True, left_index=True, how="inner")
+        dfMerged = dfMerged.merge(dfClima, on="DATA", how="inner")
 
     print(f"População com {individuos} individuos e {geracoes} gerações.")
 
@@ -64,17 +76,15 @@ if __name__ == '__main__':
     elif algoritmo == "RF":
         modelo, dfResultado, dfResumo = treinarRF(dfMerged, var, estimators=best.n_estimators,
                                                   maxDepth=best.max_depth, nLags=best.n_lags, folds=h_previsoes,
-                                                  semente=(12 * individuos * geracoes))
+                                                  semente=best.semente)
 
-    plotTreinoTeste(dfResultado["PREVISTO"],
-                    dfResultado["OBSERVADO"],
+    plotTreinoTeste(dfResultado,
                     title=f"Consumo de {previsao} {h_previsoes} passos à frente - Treino/Teste {algoritmo}")
-    plotHistResiduos(dfResultado["PREVISTO"].tail(h_previsoes),
-                     dfResultado["OBSERVADO"].tail(h_previsoes),
+    plotHistResiduos(dfResultado.tail(h_previsoes),
                      title=f"Histograma de Resíduos da Previsão do Consumo de {previsao} {h_previsoes} passos à frente - Algoritmo {algoritmo}")
     print(dfResumo.head())
 
     dfPrevisao = prever(modelo, dfMerged, var, h_previsoes, best.n_lags)
 
-    plotPrevisao(dfPrevisao["PREVISTO"], dfPrevisao["OBSERVADO"],
+    plotPrevisao(dfPrevisao, dfMerged,
                  title=f"PRevisão do Consumo de {previsao} {h_previsoes} passos à frente - Algoritmo {algoritmo}")

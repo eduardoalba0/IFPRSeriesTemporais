@@ -64,11 +64,6 @@ class GASVR:
 
     def mutation(self, individuo):
         if random.uniform(0, 1) < self.tx_mutacao:
-            individuo.n_lags = round(individuo.n_lags * (random.uniform(0.5, 1.2)))
-            individuo.mutacao = True
-            if individuo.n_lags > 24:
-                individuo.n_lags = 24
-        if random.uniform(0, 1) < self.tx_mutacao:
             individuo.n_lags = round(individuo.n_lags * random.uniform(0.5, 1.2))
             individuo.mutacao = True
             if individuo.n_lags > 24:
@@ -95,6 +90,13 @@ class IndividuoSVR:
         self.rand_c()
         self.fitness = None
         self.mutacao = False
+
+    def create(self, n_lags, kernel, epsilon, c):
+        self.n_lags = n_lags
+        self.kernel = kernel
+        self.epsilon = epsilon
+        self.c = c
+        return self
 
     def rand_n_lags(self):
         self.n_lags = random.randint(0, 20)

@@ -12,29 +12,20 @@ def prepararDados():
     df_clima["DATA"] = pd.to_datetime((df_clima["DATA"]), format="%d/%m/%Y")
     df_horas_aula["DATA"] = pd.to_datetime((df_horas_aula["DATA"]), format="%d/%m/%Y %H:%M")
 
-    df_agua = df_agua.set_index("DATA")
-    df_energia = df_energia.set_index("DATA")
-
     df_clima["DIA-SEMANA"] = df_clima["DATA"].dt.weekday
 
-    df_agua = df_agua.astype(int)
-    df_energia = df_energia.astype(int)
-
-    df_clima = df_clima.set_index("DATA")
-    df_horas_aula = df_horas_aula.set_index("DATA")
-
-    df_clima.update(df_clima[["PRECIPITACAO","DIA-SEMANA"]].astype(int))
-    for coluna in df_clima.drop(["PRECIPITACAO","DIA-SEMANA"], axis=1):
+    df_agua.update(df_agua.drop("DATA", axis=1).astype(int))
+    df_energia.update(df_energia.drop("DATA", axis=1).astype(int))
+    df_horas_aula.update(df_horas_aula.drop("DATA", axis=1).astype(int))
+    df_clima.update(df_clima[["PRECIPITACAO", "DIA-SEMANA"]].astype(int))
+    for coluna in df_clima.drop(["DATA", "PRECIPITACAO", "DIA-SEMANA"], axis=1):
         df_clima[coluna] = df_clima[coluna].astype(float)
-
-    df_horas_aula = df_horas_aula.astype(int)
 
     return df_agua, df_energia, df_clima, df_horas_aula
 
 
 def agrupamentoDiarioMedia(df):
-    df = df.reset_index()
-    df = df.groupby(pd.Grouper(key="DATA", freq="D")).mean()
+    df = df.groupby(pd.Grouper(key="DATA", freq="D")).mean().reset_index()
     return df
 
 
@@ -49,12 +40,11 @@ def agrupamentoMensal(df, datas=None, strategy="mean"):
     if "HORA" in df.columns:
         df = df.drop(["HORA"], axis=1)
     if datas is not None and np.any(datas):
-        df = df.groupby(pd.cut(df.index, right=True, bins=datas,
+        df = df.groupby(pd.cut(df["DATA"], right=True, bins=datas,
                                labels=pd.to_datetime(datas[1:].tolist())), observed=False).agg(
-            {**{col: "last" for col in df.columns},
-             **{col: strategy for col in df.columns}})
+            {**{col: "last" for col in df[["DATA"]].columns},
+             **{col: strategy for col in df.drop("DATA", axis=1).columns}}).reset_index(drop=True)
     else:
-        df = df.reset_index()
         df = df.groupby(pd.Grouper(key="DATA", freq="M")).mean()
     return df
 

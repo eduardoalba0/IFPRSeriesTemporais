@@ -1,21 +1,14 @@
 import matplotlib.pyplot as plt
-import pandas as pd
 import seaborn as sns
 import statsmodels.graphics.tsaplots as tsaplots
-from scipy.stats import kruskal
-from statsmodels.tsa.stattools import adfuller, kpss
-
-from mktest.mktest import mk_test
 
 
 def acf(serie, variaveis):
-    serie = serie.reset_index()
     for variavel in variaveis:
         tsaplots.plot_acf(serie[variavel], lags=12, title="ACF " + variavel)
 
 
 def analiseCorrelacao(df):
-    df = df.reset_index(drop=True)
     df = df.dropna()
 
     if "DATA" in df.columns:
@@ -31,7 +24,7 @@ def analiseCorrelacao(df):
 def plotBasico(df, titulo="", xlabel="Data", ylabel=""):
     plt.figure(figsize=(20, 10), dpi=100)
     for values in df.columns.values:
-        plt.plot(df.index.values, df[values], label=values)
+        plt.plot(df["DATA"], df[values], label=values)
     plt.gca().set(title=titulo, xlabel=xlabel, ylabel=ylabel)
     plt.xticks(rotation=90)
     plt.legend()
@@ -51,10 +44,10 @@ def explorarDados(dfAgua, dfEnergia, dfClima):
                titulo="Condições Climáticas da região de Palmas no período de Agosto de 2018 a Setembro de 2023")
 
 
-def plotTreinoTeste(valoresPrevistos, valoresObservados, title="", xlabel="Data", ylabel=""):
+def plotTreinoTeste(valores, title="", xlabel="Data", ylabel=""):
     plt.figure(figsize=(20, 10), dpi=100)
-    plt.plot(valoresObservados.index.values, valoresPrevistos, label='Valores Previstos')
-    plt.plot(valoresObservados.index.values, valoresObservados, label='Valores Observados')
+    plt.plot(valores["DATA"], valores["PREVISTO"], label='Valores Previstos')
+    plt.plot(valores["DATA"], valores["OBSERVADO"], label='Valores Observados')
     plt.gca().set(title=title, xlabel=xlabel, ylabel=ylabel)
     plt.xticks(rotation=90)
     plt.grid(True)
@@ -64,17 +57,17 @@ def plotTreinoTeste(valoresPrevistos, valoresObservados, title="", xlabel="Data"
 
 def plotPrevisao(previsao, original, title="", xlabel="Data", ylabel=""):
     plt.figure(figsize=(20, 10), dpi=100)
-    plt.plot(previsao.index.values, previsao, label='Valores Previstos')
-    plt.plot(original.index.values, original, label='Série Original')
+    plt.plot(previsao["DATA"], previsao["PREVISTO"], label='Valores Previstos')
+    plt.plot(original["DATA"], original["CONSUMO"], label='Série Original')
     plt.gca().set(title=title, xlabel=xlabel, ylabel=ylabel)
     plt.grid(True)
     plt.legend()
     plt.xticks(rotation=90)
     plt.show()
 
-def plotHistResiduos(valoresPrevistos, valoresObservados, title="Histograma de Resíduos", xlabel="Resíduos", ylabel="Frequência"):
+def plotHistResiduos(valores, title="Histograma de Resíduos", xlabel="Resíduos", ylabel="Frequência"):
     plt.figure(figsize=(20, 10), dpi=100)
-    plt.hist((valoresObservados - valoresPrevistos), bins='auto', color='blue', alpha=0.7)
+    plt.hist((valores["PREVISTO"] - valores["OBSERVADO"]), bins='auto', color='blue', alpha=0.7)
     plt.xlabel('Resíduos')
     plt.ylabel('Frequência')
     plt.grid(True)

@@ -1,31 +1,32 @@
-import pandas as pd
-from dateutil.relativedelta import relativedelta
+import cudf as pd
+import pandas
 
 from commons.preprocessamento import obterLags
 
 
 def prever(modelo, df, var, h, nLags):
     x = df.copy()
-    x = x.reset_index()
-    x["DATA"] = pd.to_datetime(x["DATA"])
-    x["DATA"] = x["DATA"].apply(lambda data: data + pd.DateOffset(months=h))
-    x = x.set_index("DATA")
-    x_previsao = x[["ANO", "MES", var]].merge(x.drop(["ANO", "MES", var],axis=1).shift(12).tail((h)), right_index=True, left_index=True, how="inner")
+    x["DATA"] = pandas.to_datetime(x["DATA"])
+    x["DATA"] = x["DATA"].apply(lambda data: data + pandas.DateOffset(months=h))
+    x_previsao = x[["ANO", "MES", "DATA"]].merge(
+        x.drop(["ANO", "MES", "DATA"], axis=1).shift(12).tail(h), left_index=True, right_index=True,
+        how="inner")
 
-    y_previsto = []
+    y_previsto = pandas.DataFrame()
     for index in x_previsao.index:
         if nLags > 0:
-            x_previsao = obterLags(x, var, nLags).tail(h)
+            x_teste = obterLags(x, var, nLags).tail(h)
         else:
-            x_previsao = x_previsao.sort_index(axis=1)
+            x_teste = x_teste.sort_index(axis=1)
         x_previsao = x_previsao.sort_index(axis=1)
-        x_aux = pd.DataFrame(x_previsao.loc[index]).transpose()
-        y = modelo.predict(x_aux.drop(var, axis=1))
-        x.loc[index, "CONSUMO"] = int(y)
-        y_previsto.append(y)
+        x_aux = pandas.DataFrame(x_teste.loc[index]).transpose()
+        y = modelo.predict(x_aux.drop([var, "DATA"], axis=1))
+        x.loc[index, var] = int(y)
+        y_previsto.loc[index, var] = int(y)
 
-    dfResultado = pd.DataFrame()
+    dfResultado = pandas.DataFrame()
 
-    dfResultado["PREVISTO"] = pd.concat([df[var], pd.DataFrame(y_previsto, index=x.tail(h).index.values)], axis=0)
+    dfResultado["PREVISTO"] = pandas.concat([df[var], y_previsto[var]], axis=0)
     dfResultado["OBSERVADO"] = df[var]
+    dfResultado["DATA"] = pandas.concat([df["DATA"], x_previsao["DATA"]], axis=0)
     return dfResultado
