@@ -1,6 +1,8 @@
 import random
 import threading
 
+from numba import cuda
+
 from commons.treinoTeste import treinarRF
 
 
@@ -24,7 +26,7 @@ class GARF:
             self.populacao.append(filho)
             self.calcular_fitness()
             self.populacao.pop(len(self.populacao) - 1)
-            print("Geracao: ", _)
+            print("Geracao= ", _)
         return self.populacao
 
     def init_populacao(self):
@@ -35,21 +37,12 @@ class GARF:
 
     def calcular_fitness(self):
         populacao_filtrada = list(filter(lambda ind: ind.fitness is None, self.populacao))
-        tam_parte = len(populacao_filtrada) // 2
-        metade_1 = threading.Thread(target=self.thread_calc_fitness(populacao_filtrada[0:tam_parte]))
-        metade_2 = threading.Thread(target=self.thread_calc_fitness(populacao_filtrada[tam_parte:]))
-        metade_1.start()
-        metade_2.start()
-        metade_1.join()
-        metade_2.join()
-
-        self.populacao = sorted(self.populacao, key=lambda ind: ind.fitness)
-
-    def thread_calc_fitness(self, individuos):
-        for individuo in individuos:
+        for individuo in populacao_filtrada:
             modelo, dfResultado, dfResumo = treinarRF(self.dados, self.variaveis, individuo.n_estimators,
                                                       individuo.max_depth, individuo.n_lags, self.folds, self.semente)
             individuo.fitness = dfResumo.loc[0, "MSE"]
+
+        self.populacao = sorted(self.populacao, key=lambda ind: ind.fitness)
 
     def crossover(self):
         pai = random.choice(self.populacao)
@@ -84,6 +77,7 @@ class IndividuoRF:
         self.fitness = None
         self.mutacao = False
         self.semente = 0
+        self.tempo_execucao = 0
 
     def create(self, n_lags, n_estimators, max_depth, semente):
         self.n_lags = n_lags
@@ -102,4 +96,5 @@ class IndividuoRF:
         self.max_depth = random.randint(50, 200)
 
     def __str__(self):
-        return f'fitness (MAPE): {self.fitness} n_lags: {self.n_lags}, n_estimators: {self.n_estimators}, max_depth: {self.max_depth}, mutacao: {self.mutacao}'
+        return f'fitness (MSE)= {self.fitness} - n_lags= {self.n_lags} - n_estimators= {self.n_estimators} - max_depth= {self.max_depth} - mutacao= {self.mutacao} - tempo_execucao= {self.tempo_execucao}'
+

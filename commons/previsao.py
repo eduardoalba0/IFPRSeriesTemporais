@@ -8,8 +8,8 @@ def prever(modelo, df, var, h, nLags):
     x = df.copy()
     x["DATA"] = pandas.to_datetime(x["DATA"])
     x["DATA"] = x["DATA"].apply(lambda data: data + pandas.DateOffset(months=h))
-    x_previsao = x[["ANO", "MES", "DATA"]].merge(
-        x.drop(["ANO", "MES", "DATA"], axis=1).shift(12).tail(h), left_index=True, right_index=True,
+    x_previsao = x[["DATA"]].merge(
+        x.drop(["DATA"], axis=1).shift(12).tail(h), left_index=True, right_index=True,
         how="inner")
 
     y_previsto = pandas.DataFrame()

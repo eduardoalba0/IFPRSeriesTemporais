@@ -1,0 +1,25 @@
+Energia ElÃ©trica 100Ind, 200Ger, - Com Clima;Energia ElÃ©trica 200Ind, 500Ger, - Com Clima;Energia ElÃ©trica 500Ind, 1000Ger, - Com Clima;Energia ElÃ©trica 100Ind, 200Ger, - Sem Clima;Energia ElÃ©trica 200Ind, 500Ger, - Sem Clima;Energia ElÃ©trica 500Ind, 1000Ger, - Sem Clima
+fitness (MSE)= 9994958,08 - n_lags= 1 - kernel= rbf - epsilon= 0,64996, C= 2642 - mutacao= True - tempo_execucao= 34,14232325553894;fitness (MSE)= 9915009,58 - n_lags= 1 - kernel= rbf - epsilon= 0,30736, C= 2483 - mutacao= False - tempo_execucao= 77,25913763046265;fitness (MSE)= 9902730,5 - n_lags= 1 - kernel= rbf - epsilon= 0,18045950181987724, C= 2374 - mutacao= True - tempo_execucao= 172,36377358436584;fitness (MSE)= 9910789,83 - n_lags= 1 - kernel= rbf - epsilon= 0,05607, C= 2228 - mutacao= True - tempo_execucao= 38,05216860771179;fitness (MSE)= 9909875,67 - n_lags= 1 - kernel= rbf - epsilon= 0,04772260365330783, C= 2256 - mutacao= True - tempo_execucao= 93,12922215461731;fitness (MSE)= 9910789,83 - n_lags= 1 - kernel= rbf - epsilon= 0,14103983260827838, C= 2206 - mutacao= True - tempo_execucao= 184,44548320770264
+fitness (MSE)= 10147148,08 - n_lags= 1 - kernel= rbf - epsilon= 0,28771, C= 2027 - mutacao= False - tempo_execucao= 33,5273859500885;fitness (MSE)= 10016879,92 - n_lags= 1 - kernel= rbf - epsilon= 0,0891848523168957, C= 2087 - mutacao= True - tempo_execucao= 77,07137441635132;fitness (MSE)= 9905458,75 - n_lags= 1 - kernel= rbf - epsilon= 0,32331, C= 2253 - mutacao= True - tempo_execucao= 176,6737403869629;fitness (MSE)= 10013598,92 - n_lags= 0 - kernel= sigmoid - epsilon= 0,5755555705505914, C= 176 - mutacao= True - tempo_execucao= 42,008289098739624;fitness (MSE)= 9912899,58 - n_lags= 1 - kernel= rbf - epsilon= 0,2609808068937647, C= 2289 - mutacao= True - tempo_execucao= 102,63744235038757;fitness (MSE)= 9911926,42 - n_lags= 1 - kernel= rbf - epsilon= 0,8083, C= 2140 - mutacao= False - tempo_execucao= 180,42130661010742
+fitness (MSE)= 10880659,67 - n_lags= 1 - kernel= rbf - epsilon= 0,86758, C= 1727 - mutacao= True - tempo_execucao= 41,311633825302124;fitness (MSE)= 10048786,08 - n_lags= 1 - kernel= rbf - epsilon= 0,76892, C= 2073 - mutacao= False - tempo_execucao= 80,34835028648376;fitness (MSE)= 9905550,5 - n_lags= 1 - kernel= rbf - epsilon= 0,1502244637101272, C= 2209 - mutacao= True - tempo_execucao= 179,65553855895996;fitness (MSE)= 10145867,83 - n_lags= 1 - kernel= rbf - epsilon= 0,28771, C= 2027 - mutacao= False - tempo_execucao= 39,44211769104004;fitness (MSE)= 10031144,17 - n_lags= 1 - kernel= rbf - epsilon= 0,68767, C= 2080 - mutacao= True - tempo_execucao= 96,11226773262024;fitness (MSE)= 9915667,5 - n_lags= 1 - kernel= rbf - epsilon= 0,6516739757322426, C= 2400 - mutacao= True - tempo_execucao= 180,35908484458923
+fitness (MSE)= 10993182,5 - n_lags= 1 - kernel= rbf - epsilon= 0,052629986823735236, C= 1514 - mutacao= True - tempo_execucao= 39,74384355545044;fitness (MSE)= 10065137,58 - n_lags= 1 - kernel= rbf - epsilon= 0,7175584400360984, C= 2065 - mutacao= True - tempo_execucao= 83,7082941532135;fitness (MSE)= 9909197,08 - n_lags= 1 - kernel= rbf - epsilon= 0,8083, C= 2140 - mutacao= False - tempo_execucao= 179,4980297088623;fitness (MSE)= 10418646,17 - n_lags= 1 - kernel= rbf - epsilon= 0,06638935847911327, C= 1909 - mutacao= True - tempo_execucao= 39,3878288269043;fitness (MSE)= 10047423,92 - n_lags= 0 - kernel= sigmoid - epsilon= 0,89767, C= 193 - mutacao= False - tempo_execucao= 83,7200539112091;fitness (MSE)= 9992259,92 - n_lags= 0 - kernel= rbf - epsilon= 0,4837556464349672, C= 137 - mutacao= True - tempo_execucao= 183,91839003562927
+;;;;;
+Tempo de Execução;Tempo de Execução;Tempo de Execução;Tempo de Execução;Tempo de Execução;Tempo de Execução
+34,14232326;77,25913763;172,3637736;38,05216861;93,12922215;184,4454832
+33,52738595;77,07137442;176,6737404;42,0082891;102,6374424;180,4213066
+41,31163383;80,34835029;179,6555386;39,44211769;96,11226773;180,3590848
+39,74384356;83,70829415;179,4980297;39,38782883;83,72005391;183,91839
+37,18;79,6;177,05;39,72;93,9;182,29
+;;;;;
+;;;;;
+;;;;;
+;;;;;
+;;;;;
+;;;;;
+;;;;;
+;;;;;
+;;;;;
+;;;;;
+;;;;;
+;;;;;
+;; ;;;

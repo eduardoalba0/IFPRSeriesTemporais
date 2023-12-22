@@ -45,6 +45,7 @@ def explorarDados(dfAgua, dfEnergia, dfClima):
 
 
 def plotTreinoTeste(valores, title="", xlabel="Data", ylabel=""):
+    plt.rcParams['font.size'] = 16
     plt.figure(figsize=(20, 10), dpi=100)
     plt.plot(valores["DATA"], valores["PREVISTO"], label='Valores Previstos')
     plt.plot(valores["DATA"], valores["OBSERVADO"], label='Valores Observados')
@@ -56,6 +57,7 @@ def plotTreinoTeste(valores, title="", xlabel="Data", ylabel=""):
 
 
 def plotPrevisao(previsao, original, title="", xlabel="Data", ylabel=""):
+    plt.rcParams['font.size'] = 16
     plt.figure(figsize=(20, 10), dpi=100)
     plt.plot(previsao["DATA"], previsao["PREVISTO"], label='Valores Previstos')
     plt.plot(original["DATA"], original["CONSUMO"], label='Série Original')
@@ -66,8 +68,10 @@ def plotPrevisao(previsao, original, title="", xlabel="Data", ylabel=""):
     plt.show()
 
 def plotHistResiduos(valores, title="Histograma de Resíduos", xlabel="Resíduos", ylabel="Frequência"):
+    plt.rcParams['font.size'] = 16
     plt.figure(figsize=(20, 10), dpi=100)
     plt.hist((valores["PREVISTO"] - valores["OBSERVADO"]), bins='auto', color='blue', alpha=0.7)
+    plt.gca().set(title=title)
     plt.xlabel('Resíduos')
     plt.ylabel('Frequência')
     plt.grid(True)

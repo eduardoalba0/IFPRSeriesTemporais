@@ -5,7 +5,7 @@ import pandas
 from cuml import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error, mean_absolute_percentage_error, mean_squared_error
 from sklearn.model_selection import train_test_split, TimeSeriesSplit
-from cuml import SVR
+from sklearn.svm import SVR
 
 from commons.preprocessamento import obterLags
 
@@ -19,7 +19,7 @@ def treinarRF(df, var, estimators, maxDepth, nLags, folds, semente):
     df = df.sort_index(axis=1)
 
     modelo = RandomForestRegressor(n_estimators=estimators, max_depth=maxDepth,
-                                   random_state=semente, n_streams=1)
+                                   random_state=semente, n_streams=8)
 
     return treino_teste_sequencial(df, var, modelo, folds, nLags)
 
@@ -43,18 +43,18 @@ def treino_teste_validacao_cruzada(df, var, modelo, folds, nLags):
     y = dfCopy[var]
     x = dfCopy.drop([var], axis=1)
 
-    x_testes = pd.DataFrame()
-    y_testes = pd.DataFrame()
-    y_previstos = pd.DataFrame()
+    x_testes = pandas.DataFrame()
+    y_testes = pandas.DataFrame()
+    y_previstos = pandas.DataFrame()
 
     for treino_index, teste_index in TimeSeriesSplit(n_splits=max(folds, 5), test_size=1).split(x, y):
         x_treino, x_teste = x.iloc[treino_index], x.iloc[teste_index]
         y_treino, y_teste = y.iloc[treino_index], y.iloc[teste_index]
-        modelo.fit(np.asarray(x_treino.drop("DATA", axis=1)), np.asarray(y_treino))
+        modelo.fit(x_treino.drop("DATA", axis=1))
         y_previsto = modelo.predict(x_teste.drop("DATA", axis=1))
-        x_testes = pd.concat([x_testes, pd.DataFrame(x_teste)], axis=0)
-        y_testes = pd.concat([y_testes, pd.DataFrame(y_teste)], axis=0)
-        y_previstos = pd.concat([y_previstos, pd.DataFrame(y_previsto)], axis=0)
+        x_testes = pandas.concat([x_testes, pandas.DataFrame(x_teste)], axis=0)
+        y_testes = pandas.concat([y_testes, pandas.DataFrame(y_teste)], axis=0)
+        y_previstos = pd.concat([y_previstos, pandas.DataFrame(y_previsto)], axis=0)
 
     dfResultado, dfResumo = medidas_desempenho(x_testes, y_testes, y_previstos)
 
@@ -72,8 +72,7 @@ def treino_teste_sequencial(df, var, modelo, h, nLags):
     x = dfCopy.copy()
 
     x_treino, x_teste, y_treino, y_teste = train_test_split(x, y, test_size=h, shuffle=False)
-
-    modelo.fit(np.asarray(x_treino.drop(["DATA", var], axis=1)), np.asarray(y_treino))
+    modelo.fit(x_treino.drop(["DATA", var], axis=1), y_treino)
 
     y_previsto = pandas.DataFrame()
 
