@@ -34,13 +34,22 @@ class GASVR:
 
     def calcular_fitness(self):
         populacao_filtrada = list(filter(lambda ind: ind.fitness is None, self.populacao))
+        threads = []
         for individuo in populacao_filtrada:
-            modelo, dfResultado, dfResumo = treinarSVR(self.dados, self.variaveis, individuo.kernel,
-                                                       individuo.epsilon, individuo.c, individuo.n_lags,
-                                                       self.folds)
-            individuo.fitness = dfResumo.loc[0, "MSE"]
+            thread = threading.Thread(target=self.thread_treino(individuo))
+            threads.append(thread)
+            thread.start()
+
+        for thread in threads:
+            thread.join()
 
         self.populacao = sorted(self.populacao, key=lambda ind: ind.fitness)
+
+    def thread_treino(self, individuo):
+        modelo, dfResultado, dfResumo = treinarSVR(self.dados, self.variaveis, individuo.kernel,
+                                                   individuo.epsilon, individuo.c, individuo.n_lags,
+                                                   self.folds)
+        individuo.fitness = dfResumo.loc[0, "MSE"]
 
     def crossover(self):
         pai = random.choice(self.populacao)

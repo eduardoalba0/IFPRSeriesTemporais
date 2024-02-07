@@ -1,4 +1,3 @@
-import cudf as pd
 import pandas
 
 from commons.preprocessamento import obterLags

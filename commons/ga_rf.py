@@ -1,8 +1,6 @@
 import random
 import threading
 
-from numba import cuda
-
 from commons.treinoTeste import treinarRF
 
 
@@ -37,12 +35,21 @@ class GARF:
 
     def calcular_fitness(self):
         populacao_filtrada = list(filter(lambda ind: ind.fitness is None, self.populacao))
+        threads = []
         for individuo in populacao_filtrada:
-            modelo, dfResultado, dfResumo = treinarRF(self.dados, self.variaveis, individuo.n_estimators,
-                                                      individuo.max_depth, individuo.n_lags, self.folds, self.semente)
-            individuo.fitness = dfResumo.loc[0, "MSE"]
+            thread = threading.Thread(target=self.thread_treino(individuo))
+            threads.append(thread)
+            thread.start()
+
+        for thread in threads:
+            thread.join()
 
         self.populacao = sorted(self.populacao, key=lambda ind: ind.fitness)
+
+    def thread_treino(self, individuo):
+        modelo, dfResultado, dfResumo = treinarRF(self.dados, self.variaveis, individuo.n_estimators,
+                                                  individuo.max_depth, individuo.n_lags, self.folds)
+        individuo.fitness = dfResumo.loc[0, "MSE"]
 
     def crossover(self):
         pai = random.choice(self.populacao)
@@ -76,14 +83,12 @@ class IndividuoRF:
         self.rand_max_depth()
         self.fitness = None
         self.mutacao = False
-        self.semente = 0
         self.tempo_execucao = 0
 
-    def create(self, n_lags, n_estimators, max_depth, semente):
+    def create(self, n_lags, n_estimators, max_depth):
         self.n_lags = n_lags
         self.n_estimators = n_estimators
         self.max_depth = max_depth
-        self.semente = semente
         return self
 
     def rand_n_lags(self):

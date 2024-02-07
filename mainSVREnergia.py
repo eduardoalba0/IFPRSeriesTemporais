@@ -50,6 +50,7 @@ if __name__ == '__main__':
                 global_populacao[f"{str} {individuos}Ind. {geracoes}Ger. - {clima}"] = populacao
                 global_populacao.to_csv(f"Resultados/GA-SVR {str}.csv", index=False, sep=";")
 
+            bests = sorted(bests, key=lambda ind: ind.fitness)
             best = bests[0]
             for h_previsoes in [3, 6, 12]:
                 modelo, dfResultado, dfResumo = treinarSVR(dfMerged, var, kernel=best.kernel,
